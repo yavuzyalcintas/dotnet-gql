@@ -1,0 +1,170 @@
+# Example GraphQL Mutations using Resolver Architecture
+
+# Book Mutations
+mutation AddBook {
+  addBook(
+    title: "The Great Gatsby"
+    description: "A story of the Jazz Age"
+    authorId: 1
+    price: 19.99
+  ) {
+    id
+    title
+    price
+    isAvailable
+    author {
+      name
+    }
+  }
+}
+
+mutation UpdateBook {
+  updateBook(id: 1, title: "Updated Title", price: 24.99) {
+    id
+    title
+    price
+    updatedAt
+  }
+}
+
+mutation UpdateBookWithValidation {
+  updateBookWithValidation(id: 1, title: "Valid Title", price: 29.99) {
+    id
+    title
+    price
+  }
+}
+
+mutation ToggleBookAvailability {
+  toggleBookAvailability(id: 1) {
+    id
+    title
+    isAvailable
+  }
+}
+
+mutation BulkUpdateBookPrices {
+  bulkUpdateBookPrices(percentageChange: 10.0) {
+    id
+    title
+    price
+  }
+}
+
+mutation MarkBooksUnavailableByAuthor {
+  markBooksUnavailableByAuthor(authorId: 1) {
+    id
+    title
+    isAvailable
+  }
+}
+
+mutation DeleteBook {
+  deleteBook(id: 1)
+}
+
+# Author Mutations
+mutation AddAuthor {
+  addAuthor(
+    name: "F. Scott Fitzgerald"
+    email: "fitzgerald@example.com"
+    dateOfBirth: "1896-09-24"
+  ) {
+    id
+    name
+    email
+    age
+  }
+}
+
+mutation AddAuthorWithValidation {
+  addAuthorWithValidation(
+    name: "Ernest Hemingway"
+    email: "hemingway@example.com"
+    dateOfBirth: "1899-07-21"
+  ) {
+    id
+    name
+    email
+    age
+  }
+}
+
+mutation UpdateAuthor {
+  updateAuthor(
+    id: 1
+    name: "Updated Author Name"
+    email: "updated@example.com"
+  ) {
+    id
+    name
+    email
+    updatedAt
+  }
+}
+
+mutation UpdateAuthorWithValidation {
+  updateAuthorWithValidation(
+    id: 1
+    name: "Valid Author Name"
+    email: "valid@example.com"
+  ) {
+    id
+    name
+    email
+  }
+}
+
+mutation BulkDeleteAuthorsWithoutBooks {
+  bulkDeleteAuthorsWithoutBooks {
+    id
+    name
+    email
+  }
+}
+
+mutation DeleteAuthor {
+  deleteAuthor(id: 1)
+}
+
+# Complex Queries with Resolvers
+query GetBookWithAuthor {
+  book(id: 1) {
+    id
+    title
+    price
+    formattedPrice
+    ageInYears
+    author {
+      name
+      email
+      age
+    }
+    hasValidAuthor
+  }
+}
+
+query GetAuthorWithBooks {
+  author(id: 1) {
+    id
+    name
+    age
+    books {
+      id
+      title
+      price
+    }
+    booksCount
+    availableBooks {
+      id
+      title
+    }
+    totalBooksValue
+    mostExpensiveBook {
+      id
+      title
+      price
+    }
+    yearsSinceFirstPublication
+  }
+}

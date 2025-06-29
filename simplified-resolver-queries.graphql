@@ -1,0 +1,370 @@
+# Simplified GraphQL Queries Using Resolvers (Maintainable Multi-DB Approach)
+
+# =============================================================================
+# SIMPLE NESTED QUERIES - NO MANUAL FIELD SPECIFICATION NEEDED!
+# =============================================================================
+
+# The magic: Just ask for what you want, resolvers handle the cross-database queries automatically!
+
+# Get books with author info - ONE SIMPLE QUERY
+query GetBooksWithAuthors {
+  books {
+    id
+    title
+    price
+    author {
+      # This automatically queries the Author database!
+      name
+      email
+      age # Computed field from resolver
+    }
+    formattedPrice # Formatted price from resolver
+    ageInYears # Book age from resolver
+  }
+}
+
+# Get authors with their books - ONE SIMPLE QUERY
+query GetAuthorsWithBooks {
+  authors {
+    id
+    name
+    email
+    age # Computed field from resolver
+    books {
+      # This automatically queries the Book database!
+      id
+      title
+      price
+      formattedPrice
+    }
+    booksCount # Count from resolver
+    totalBooksValue # Total value from resolver
+    mostExpensiveBook {
+      # Most expensive book from resolver
+      title
+      price
+    }
+  }
+}
+
+# =============================================================================
+# SPECIFIC BOOK/AUTHOR WITH FULL NESTING
+# =============================================================================
+
+# Get a specific book with complete author details
+query GetBookWithAuthor {
+  book(id: 1) {
+    id
+    title
+    description
+    price
+    author {
+      name
+      email
+      dateOfBirth
+      books {
+        # Get other books by the same author
+        id
+        title
+        price
+      }
+      booksCount
+    }
+    hasValidAuthor # Boolean check from resolver
+  }
+}
+
+# Get a specific author with all book details
+query GetAuthorWithBooks {
+  author(id: 1) {
+    id
+    name
+    email
+    books {
+      id
+      title
+      description
+      price
+      isAvailable
+    }
+    availableBooks {
+      # Only available books from resolver
+      title
+      price
+    }
+    booksCount
+    totalBooksValue
+    yearsSinceFirstPublication
+  }
+}
+
+# =============================================================================
+# FILTERED QUERIES WITH AUTOMATIC RELATIONSHIPS
+# =============================================================================
+
+# Get expensive books with their authors
+query GetExpensiveBooksWithAuthors {
+  books(where: { price: { gt: 20.0 } }) {
+    title
+    price
+    author {
+      name
+      email
+    }
+  }
+}
+
+# Get authors sorted by name with their books
+query GetAuthorsSortedWithBooks {
+  authors(order: { name: ASC }) {
+    name
+    books {
+      title
+      price
+      isAvailable
+    }
+    booksCount
+  }
+}
+
+# Get available books only with author info
+query GetAvailableBooksWithAuthors {
+  availableBooks {
+    title
+    price
+    author {
+      name
+      totalBooksValue
+    }
+  }
+}
+
+# =============================================================================
+# COMPLEX NESTED QUERIES WITH COMPUTED FIELDS
+# =============================================================================
+
+# Get complete catalog with computed information
+query GetCompleteCatalog {
+  books {
+    title
+    formattedPrice
+    ageInYears
+    author {
+      name
+      age
+      yearsSinceFirstPublication
+      mostExpensiveBook {
+        title
+        formattedPrice
+      }
+    }
+  }
+}
+
+# Get authors with detailed analytics
+query GetAuthorsWithAnalytics {
+  authors {
+    name
+    age
+    booksCount
+    totalBooksValue
+    books {
+      title
+      ageInYears
+      formattedPrice
+    }
+    availableBooks {
+      title
+      price
+    }
+    mostExpensiveBook {
+      title
+      formattedPrice
+    }
+  }
+}
+
+# =============================================================================
+# SEARCH AND FILTERED NESTED QUERIES
+# =============================================================================
+
+# Search books and get author info
+query SearchBooksWithAuthors {
+  searchBooks(searchTerm: "Harry") {
+    title
+    description
+    author {
+      name
+      booksCount
+    }
+  }
+}
+
+# Get books by specific author with full details
+query GetBooksByAuthorWithDetails {
+  booksByAuthor(authorId: 1) {
+    title
+    price
+    ageInYears
+    author {
+      name
+      totalBooksValue
+    }
+  }
+}
+
+# =============================================================================
+# STATISTICS WITH RELATIONSHIPS
+# =============================================================================
+
+# Get statistics with detailed breakdown
+query GetStatistics {
+  totalBooksCount
+  totalAuthorsCount
+  averageBookPrice
+  mostExpensiveBook {
+    title
+    price
+    author {
+      name
+    }
+  }
+  newestBook {
+    title
+    publishedDate
+    author {
+      name
+    }
+  }
+}
+
+# =============================================================================
+# MINIMAL QUERIES (Just what you need)
+# =============================================================================
+
+# Just book titles and author names
+query GetBookTitlesAndAuthors {
+  books {
+    title
+    authorName # Direct resolver field
+  }
+}
+
+# Just author names and book counts
+query GetAuthorsAndCounts {
+  authors {
+    name
+    booksCount
+  }
+}
+
+# =============================================================================
+# FRAGMENTS FOR REUSABILITY
+# =============================================================================
+
+fragment BookBasic on Book {
+  id
+  title
+  formattedPrice
+}
+
+fragment AuthorBasic on Author {
+  id
+  name
+  age
+}
+
+fragment BookWithAuthor on Book {
+  ...BookBasic
+  author {
+    ...AuthorBasic
+  }
+}
+
+# Using fragments
+query GetBooksUsingFragments {
+  books {
+    ...BookWithAuthor
+    ageInYears
+  }
+}
+
+# =============================================================================
+# CONDITIONAL QUERIES
+# =============================================================================
+
+# Query with conditions
+query GetConditionalData($includeAuthor: Boolean!) {
+  books {
+    title
+    price
+    author @include(if: $includeAuthor) {
+      name
+      email
+    }
+  }
+}
+
+# =============================================================================
+# PAGINATION WITH RELATIONSHIPS
+# =============================================================================
+
+# Paginated books with authors (if pagination is implemented)
+query GetPaginatedBooksWithAuthors {
+  books(first: 10) {
+    title
+    author {
+      name
+    }
+  }
+}
+
+# =============================================================================
+# THE MAGIC: NO COMPOSITE TYPES NEEDED!
+# =============================================================================
+
+# This single query gets everything you need from both databases:
+query GetEverything {
+  books {
+    id
+    title
+    description
+    price
+    formattedPrice
+    ageInYears
+    hasValidAuthor
+    author {
+      id
+      name
+      email
+      age
+      booksCount
+      totalBooksValue
+      yearsSinceFirstPublication
+      mostExpensiveBook {
+        title
+        formattedPrice
+      }
+    }
+  }
+
+  authors {
+    id
+    name
+    email
+    age
+    booksCount
+    totalBooksValue
+    books {
+      id
+      title
+      formattedPrice
+      ageInYears
+    }
+  }
+
+  # Statistics
+  totalBooksCount
+  totalAuthorsCount
+  averageBookPrice
+}
