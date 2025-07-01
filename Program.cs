@@ -2,21 +2,51 @@ using GraphQLApi.GraphQL;
 using GraphQLApi.GraphQL.Resolvers;
 using GraphQLApi.Services;
 using GraphQLApi.Data;
+using GraphQLApi.Repositories;
+using GraphQLApi.ExternalServices;
+using GraphQLApi.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddScoped<BookService>();
+// Configure strongly-typed configuration
+builder.Services.Configure<DatabaseConfiguration>(
+    builder.Configuration.GetSection(DatabaseConfiguration.SectionName));
+builder.Services.Configure<ExternalApiConfiguration>(
+    builder.Configuration.GetSection(ExternalApiConfiguration.SectionName));
 
-// Configure database contexts with SQL Server LocalDB
+// Configure database contexts with new configuration structure
+var dbConfig = builder.Configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()
+               ?? new DatabaseConfiguration();
+
 builder.Services.AddDbContext<AuthorDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthorDatabase") ??
-        "Server=(localdb)\\mssqllocaldb;Database=AuthorDb;Trusted_Connection=true;TrustServerCertificate=true"));
+    options.UseSqlServer(dbConfig.AuthorDatabase));
 
 builder.Services.AddDbContext<BookDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("BookDatabase") ??
-        "Server=(localdb)\\mssqllocaldb;Database=BookDb;Trusted_Connection=true;TrustServerCertificate=true"));
+    options.UseSqlServer(dbConfig.BookDatabase));
+
+// Register repositories
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+
+// Register domain services (replacing the old BookService)
+builder.Services.AddScoped<BookDomainService>();
+builder.Services.AddScoped<AuthorDomainService>();
+
+// Configure HttpClients for external APIs
+var apiConfig = builder.Configuration.GetSection(ExternalApiConfiguration.SectionName).Get<ExternalApiConfiguration>()
+                ?? new ExternalApiConfiguration();
+
+builder.Services.AddHttpClient<IInventoryApiClient, InventoryApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiConfig.Inventory.BaseUrl);
+    client.DefaultRequestHeaders.Add("X-API-Key", apiConfig.Inventory.ApiKey);
+    client.Timeout = TimeSpan.FromSeconds(apiConfig.Inventory.TimeoutSeconds);
+});
+
+// Add other external API clients as needed
+// builder.Services.AddHttpClient<IRecommendationApiClient, RecommendationApiClient>(...)
+// builder.Services.AddHttpClient<IPaymentApiClient, PaymentApiClient>(...)
 
 // Add GraphQL services with resolvers
 builder.Services

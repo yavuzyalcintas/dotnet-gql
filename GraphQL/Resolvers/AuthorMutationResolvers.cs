@@ -10,25 +10,25 @@ public class AuthorMutationResolvers
     /// <summary>
     /// Add a new author
     /// </summary>
-    public async Task<Author> AddAuthor([Service] BookService bookService, string name, string email, DateTime dateOfBirth)
+    public async Task<Author> AddAuthor([Service] AuthorDomainService authorService, string name, string email, DateTime dateOfBirth)
     {
-        return await bookService.AddAuthorAsync(name, email, dateOfBirth);
+        return await authorService.AddAuthorAsync(name, email, dateOfBirth);
     }
 
     /// <summary>
     /// Update an existing author
     /// </summary>
-    public async Task<Author?> UpdateAuthor([Service] BookService bookService, int id, string? name = null, string? email = null, DateTime? dateOfBirth = null)
+    public async Task<Author?> UpdateAuthor([Service] AuthorDomainService authorService, int id, string? name = null, string? email = null, DateTime? dateOfBirth = null)
     {
-        return await bookService.UpdateAuthorAsync(id, name, email, dateOfBirth);
+        return await authorService.UpdateAuthorAsync(id, name, email, dateOfBirth);
     }
 
     /// <summary>
     /// Delete an author
     /// </summary>
-    public async Task<bool> DeleteAuthor([Service] BookService bookService, int id)
+    public async Task<bool> DeleteAuthor([Service] AuthorDomainService authorService, int id)
     {
-        return await bookService.DeleteAuthorAsync(id);
+        return await authorService.DeleteAuthorAsync(id);
     }
 
     /// <summary>

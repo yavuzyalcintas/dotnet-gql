@@ -10,7 +10,7 @@ public class BookMutationResolvers
     /// <summary>
     /// Add a new book
     /// </summary>
-    public async Task<Book> AddBook([Service] BookService bookService, string title, string description, int authorId, decimal price)
+    public async Task<Book> AddBook([Service] BookDomainService bookService, string title, string description, int authorId, decimal price)
     {
         return await bookService.AddBookAsync(title, description, authorId, price);
     }
@@ -18,7 +18,7 @@ public class BookMutationResolvers
     /// <summary>
     /// Update an existing book
     /// </summary>
-    public async Task<Book?> UpdateBook([Service] BookService bookService, int id, string? title = null, string? description = null, decimal? price = null, bool? isAvailable = null)
+    public async Task<Book?> UpdateBook([Service] BookDomainService bookService, int id, string? title = null, string? description = null, decimal? price = null, bool? isAvailable = null)
     {
         return await bookService.UpdateBookAsync(id, title, description, price, isAvailable);
     }
@@ -26,7 +26,7 @@ public class BookMutationResolvers
     /// <summary>
     /// Delete a book
     /// </summary>
-    public async Task<bool> DeleteBook([Service] BookService bookService, int id)
+    public async Task<bool> DeleteBook([Service] BookDomainService bookService, int id)
     {
         return await bookService.DeleteBookAsync(id);
     }
@@ -34,7 +34,7 @@ public class BookMutationResolvers
     /// <summary>
     /// Toggle book availability
     /// </summary>
-    public async Task<Book?> ToggleBookAvailability([Service] BookService bookService, int id)
+    public async Task<Book?> ToggleBookAvailability([Service] BookDomainService bookService, int id)
     {
         var book = await bookService.GetBookByIdAsync(id);
         if (book == null) return null;
@@ -45,7 +45,7 @@ public class BookMutationResolvers
     /// <summary>
     /// Bulk update book prices by percentage
     /// </summary>
-    public async Task<IEnumerable<Book>> BulkUpdateBookPrices([Service] BookService bookService, decimal percentageChange)
+    public async Task<IEnumerable<Book>> BulkUpdateBookPrices([Service] BookDomainService bookService, decimal percentageChange)
     {
         var books = await bookService.GetBooks().ToListAsync();
         var updatedBooks = new List<Book>();
@@ -64,7 +64,7 @@ public class BookMutationResolvers
     /// <summary>
     /// Mark books as unavailable by author
     /// </summary>
-    public async Task<IEnumerable<Book>> MarkBooksUnavailableByAuthor([Service] BookService bookService, int authorId)
+    public async Task<IEnumerable<Book>> MarkBooksUnavailableByAuthor([Service] BookDomainService bookService, int authorId)
     {
         var books = await bookService.GetBooksByAuthorIdAsync(authorId);
         var updatedBooks = new List<Book>();
@@ -82,20 +82,17 @@ public class BookMutationResolvers
     /// <summary>
     /// Update book with validation
     /// </summary>
-    public async Task<Book?> UpdateBookWithValidation([Service] BookService bookService, int id, string? title = null, string? description = null, decimal? price = null, bool? isAvailable = null)
+    public async Task<Book?> UpdateBookWithValidation([Service] BookDomainService bookService, int id, string? title = null, string? description = null, decimal? price = null, bool? isAvailable = null)
     {
-        // Validate price if provided
-        if (price.HasValue && price.Value < 0)
-        {
-            throw new ArgumentException("Price cannot be negative");
-        }
-
-        // Validate title if provided
-        if (!string.IsNullOrEmpty(title) && title.Length > 200)
-        {
-            throw new ArgumentException("Title cannot exceed 200 characters");
-        }
-
+        // The domain service now handles validation, so we can simplify this
         return await bookService.UpdateBookAsync(id, title, description, price, isAvailable);
+    }
+
+    /// <summary>
+    /// Update book stock via external inventory API
+    /// </summary>
+    public async Task<bool> UpdateBookStock([Service] BookDomainService bookService, int bookId, int quantity)
+    {
+        return await bookService.UpdateBookStockAsync(bookId, quantity);
     }
 }
